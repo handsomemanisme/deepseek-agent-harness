@@ -8,3 +8,4 @@ data/raw/
 runs/
 *.pyc
 .DS_Store
+backups/

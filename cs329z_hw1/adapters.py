@@ -61,7 +61,9 @@ def run_priority(email: Email, lm: LMCallable) -> dict:
     * The function does not raise and does not modify ``email``.
     * Live: at least 85% agreement with tests/fixtures/priority_gold.json.
     """
-    raise NotImplementedError
+    from cs329z_hw1.pipelines.priority import classify_priority
+
+    return classify_priority(email, lm)
 
 
 def run_daily_digest(emails: list[Email], lm: LMCallable) -> str:
@@ -79,7 +81,9 @@ def run_daily_digest(emails: list[Email], lm: LMCallable) -> str:
       site that email is about; it contains no term listed for the gold
       ignore emails.
     """
-    raise NotImplementedError
+    from cs329z_hw1.pipelines.daily_digest import create_daily_digest
+
+    return create_daily_digest(emails, lm)
 
 
 def run_bm25_build(docs: list[str]) -> Any:
@@ -92,7 +96,9 @@ def run_bm25_build(docs: list[str]) -> Any:
     back to ``run_bm25_search``. The index over the archive must build in
     under 15 seconds.
     """
-    raise NotImplementedError
+    from cs329z_hw1.bm25 import build_bm25
+
+    return build_bm25(docs)
 
 
 def run_bm25_search(index: Any, query: str, k: int) -> list[tuple[int, float]]:
@@ -113,7 +119,9 @@ def run_bm25_search(index: Any, query: str, k: int) -> list[tuple[int, float]]:
       query on average over the archive, and 2 ms for a term that occurs in
       3 of 200,000 documents.
     """
-    raise NotImplementedError
+    from cs329z_hw1.bm25 import search_bm25
+
+    return search_bm25(index, query, k)
 
 
 def run_email_qa(
@@ -139,7 +147,9 @@ def run_email_qa(
       contain an accepted answer, and the ``support`` of every correct
       answer includes at least one gold email.
     """
-    raise NotImplementedError
+    from cs329z_hw1.pipelines.email_qa import answer_email_question
+
+    return answer_email_question(question, search, lm)
 
 
 # ======================================================================
@@ -171,7 +181,9 @@ def run_tool_registry(tools: list[ToolSpec]) -> Any:
       ``fn(**args)``: status "ok", ``content == str(return value)``.
     * The registry keeps working after any of these outcomes.
     """
-    raise NotImplementedError
+    from cs329z_hw1.agent.registry import ToolRegistry
+
+    return ToolRegistry(tools)
 
 
 def run_render_tools(schemas: list[dict]) -> str:
@@ -183,7 +195,9 @@ def run_render_tools(schemas: list[dict]) -> str:
     this text, the model must write a correct call for at least 18 of the 20
     requests in tests/fixtures/agent_protocol_requests.json.
     """
-    raise NotImplementedError
+    from cs329z_hw1.agent.protocol import render_tools
+
+    return render_tools(schemas)
 
 
 def run_parse_response(text: str) -> ParsedResponse:
@@ -203,7 +217,9 @@ def run_parse_response(text: str) -> ParsedResponse:
       is exactly the original call, never a different one. If the cut is
       inside the arguments, ``tool_call`` is None and ``error`` is set.
     """
-    raise NotImplementedError
+    from cs329z_hw1.agent.protocol import parse_response
+
+    return parse_response(text)
 
 
 def run_format_tool_call(text: str, call: ToolCall) -> str:
@@ -222,7 +238,9 @@ def run_format_tool_call(text: str, call: ToolCall) -> str:
       complete call in your own format.
     * ``call`` is not modified.
     """
-    raise NotImplementedError
+    from cs329z_hw1.agent.protocol import format_tool_call
+
+    return format_tool_call(text, call)
 
 
 def run_agent_session(
@@ -338,7 +356,9 @@ def run_agent_session(
     * Nothing in a tool result changes the mode, the approval policy or
       the deny rules.
     """
-    raise NotImplementedError
+    from cs329z_hw1.agent.session import create_agent_session
+
+    return create_agent_session(lm, tools, config)
 
 
 def run_build_doc_index(docs: list[dict]) -> Any:
@@ -351,7 +371,9 @@ def run_build_doc_index(docs: list[dict]) -> Any:
     it to both; your ``search_docs`` and ``read_doc`` tools should build it
     the first time a tool needs it and share it.
     """
-    raise NotImplementedError
+    from cs329z_hw1.documents import build_doc_index
+
+    return build_doc_index(docs)
 
 
 def run_search_docs(index: Any, query: str, k: int = 5) -> list[SearchResult]:
@@ -368,7 +390,9 @@ def run_search_docs(index: Any, query: str, k: int = 5) -> list[SearchResult]:
       document and its snippet contains the word.
     * The same call returns the same results every time.
     """
-    raise NotImplementedError
+    from cs329z_hw1.documents import search_docs
+
+    return search_docs(index, query, k)
 
 
 def run_read_doc(index: Any, doc_id: str, start_line: int = 1) -> DocWindow:
@@ -387,4 +411,6 @@ def run_read_doc(index: Any, doc_id: str, start_line: int = 1) -> DocWindow:
     * An unknown ``doc_id``, or a ``start_line`` outside
       ``1..total_lines``, raises ValueError or LookupError.
     """
-    raise NotImplementedError
+    from cs329z_hw1.documents import read_doc
+
+    return read_doc(index, doc_id, start_line)

@@ -2,8 +2,8 @@
 
     uv run python -m cs329z_hw1.chat [--mode confirm|auto] [--memory-dir DIR] [--out DIR]
 
-This builds one session with ``cs329z_hw1.adapters.run_agent_session(LM(), None,
-config)``, so it runs your full Cardinal toolset on the grading model.
+This builds one session with ``DeepSeekLM`` as the agent and auxiliary model,
+so it runs your full Cardinal toolset through the project's DeepSeek adapter.
 You are the user: in confirm mode you are asked to approve
 tool calls, and ``ask_user`` questions are put to you. Type ``exit`` or
 press Ctrl-D to leave.
@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # so `cs329z_hw1.adapters` imports from any directory
 
-from cs329z_hw1.llm import LM
+from cs329z_hw1.deepseek import DeepSeekLM
 from cs329z_hw1.types import AgentConfig
 from cs329z_hw1.user import ConsoleUser
 
@@ -38,13 +38,23 @@ def main() -> None:
 
     from cs329z_hw1 import adapters  # your wiring
 
+    lm = DeepSeekLM(
+        max_tokens=4096,
+        thinking=False,
+        tag="chat/agent",
+    )
+    aux_lm = DeepSeekLM(
+        max_tokens=2048,
+        thinking=False,
+        tag="chat/aux",
+    )
+
     config = AgentConfig(
         mode=args.mode,
         user=ConsoleUser(),
         memory_dir=args.memory_dir,
-        aux_lm=LM(tag="chat/aux"),
+        aux_lm=aux_lm,
     )
-    lm = LM(tag="chat")
     session = adapters.run_agent_session(lm, None, config)
     print(f"Cardinal Agent ({args.mode} mode, memory in {args.memory_dir}). Type exit to leave.")
     started = time.strftime("%Y%m%d-%H%M%S")
@@ -73,7 +83,7 @@ def main() -> None:
             "model": lm.model,
             "turns": turns,
             "transcript": session.transcript,
-            "usage": {"agent": lm.usage(), "aux": config.aux_lm.usage()},
+            "usage": {"agent": lm.usage(), "aux": aux_lm.usage()},
         }
         path.write_text(json.dumps(record, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
         print(f"Saved this conversation to {path}")

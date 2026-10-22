@@ -175,6 +175,72 @@ def test_round_trip_when_an_argument_contains_a_formatted_call():
     )
 
 
+def test_parse_deepseek_dsml_text_tool_call():
+    """DeepSeek's content-only DSML call is accepted at the model boundary."""
+
+    reply = (
+        "Checking now.\n"
+        '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="echo">\n'
+        '{"text":"PROTOCOL-4821"}\n</tool_call>'
+    )
+    parsed = parse(reply)
+    assert_same_call(parsed, ToolCall("echo", {"text": "PROTOCOL-4821"}), reply)
+    assert parsed.text == "Checking now."
+
+
+def test_parse_deepseek_dsml_parameter_tool_call():
+    """DeepSeek may represent each argument with a DSML parameter tag."""
+
+    reply = (
+        '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="remember">\n'
+        '<｜｜DSML｜｜ parameter name="fact" string="true">'
+        'The user means the firmware spec by "the spec".'
+        '</｜｜DSML｜｜ parameter>\n'
+        '</｜｜DSML｜｜ invoke>\n</｜｜DSML｜｜ calls>'
+    )
+    parsed = parse(reply)
+    assert_same_call(
+        parsed,
+        ToolCall("remember", {"fact": 'The user means the firmware spec by "the spec".'}),
+        reply,
+    )
+
+
+def test_parse_deepseek_dsml_multiple_typed_parameters():
+    reply = (
+        '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="make_report">\n'
+        '<｜｜DSML｜｜ parameter name="title" string="true">Q4</｜｜DSML｜｜ parameter>\n'
+        '<｜｜DSML｜｜ parameter name="limit" string="false">4</｜｜DSML｜｜ parameter>\n'
+        '<｜｜DSML｜｜ parameter name="verbose" string="false">true</｜｜DSML｜｜ parameter>\n'
+        '</｜｜DSML｜｜ invoke>\n</｜｜DSML｜｜ calls>'
+    )
+    parsed = parse(reply)
+    assert_same_call(
+        parsed,
+        ToolCall("make_report", {"title": "Q4", "limit": 4, "verbose": True}),
+        reply,
+    )
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="echo">\n{"text":"x"}',
+        '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="echo">\n[]\n</tool_call>',
+        (
+            '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="echo">\n'
+            '{"text":"one"}\n</tool_call>\n'
+            '<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name="echo">\n'
+            '{"text":"two"}\n</tool_call>'
+        ),
+    ],
+)
+def test_malformed_deepseek_dsml_is_an_error(reply):
+    parsed = parse(reply)
+    assert parsed.tool_call is None
+    assert parsed.error
+
+
 def test_format_does_not_change_the_call_object():
     args = {"text": "unchanged", "nested": {"k": [1, 2]}}
     call = ToolCall("echo", args)
